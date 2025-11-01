@@ -8,7 +8,7 @@
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box;user-select: none;}
 body{
     font-family:'Cairo',sans-serif;
     display:flex;
@@ -17,9 +17,9 @@ body{
     min-height:100vh;
     text-align:center;
     color:white;
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+    background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), 
                 url('mor.jpg') no-repeat center center/cover;
-    transition: background 1s ease-in-out;
+    transition:background  1s ease-in-out;
 }
 body.success-bg{animation: moveBackground 1.5s ease-in-out;}
 @keyframes moveBackground{
@@ -40,6 +40,19 @@ button:hover{box-shadow:0 0 30px 13px rgba(2,0,36,1);}
 @keyframes confettiText{0%{transform:scale(0);opacity:0;}50%{transform:scale(1.2);opacity:1;}100%{transform:scale(1);opacity:1;}}
 .fail-animation{animation: shake 0.8s ease-in-out;}
 @keyframes shake{0%{transform:translateX(0);}25%{transform:translateX(-10px);}50%{transform:translateX(10px);}75%{transform:translateX(-10px);}100%{transform:translateX(0);}}
+.retour{
+     text-decoration: none;
+    background-color:rgba(9,9,121,1) ;
+    padding: 7px 30px;
+    color: rgba(2,0,36,1);
+    border-radius: 5px;
+    font-size: 22px;
+    font-weight: 900;
+    transition:.3s ease;
+}
+.retour:hover{
+    box-shadow: 0 0 30px 13px rgba(2,0,36,1);
+}
 </style>
 </head>
 <body>
@@ -112,10 +125,15 @@ function dis(){
         quiz.appendChild(ele);
         quiz.appendChild(answer);
     } else {
-        quiz.innerHTML = `<h1 style="font-size:32px;">النتيجة هي ${score}/${question.length}</h1>
-                          <h2 style="margin-bottom:40px;font-size:32px;">${score>=10 ? "نجحت 🎉":"فشلت ❌"}</h2>
-                          <a href="">إعادة الاختبار</a>`;
-        next.style.display="none";
+        clearInterval(timer); // لإيقاف المؤقت تمامًا عند النتيجة
+        const timerDiv = document.getElementById("timer");
+        quiz.innerHTML = `
+            <h1 style="font-size:32px;">النتيجة هي ${score}/${question.length}</h1>
+            <h2 style="margin-bottom:40px;font-size:32px;">${score>=10 ? "نجحت 🎉" : "فشلت ❌"}</h2>
+            <a href="" class="retour">إعادة الاختبار</a>
+        `;
+        timerDiv.remove()
+        next.style.display = "none";
     }
 }
 
