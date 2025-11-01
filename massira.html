@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اختبار المسيرة الخضراء</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;900&display=swap">
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    font-family:'Cairo',sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    text-align:center;
+    color:white;
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                url('mor.jpg') no-repeat center center/cover;
+    transition: background 1s ease-in-out;
+}
+body.success-bg{animation: moveBackground 1.5s ease-in-out;}
+@keyframes moveBackground{
+    0% {background-position: center top;}
+    50% {background-position: center center;}
+    100% {background-position: center bottom;}
+}
+.container{padding:0 15px; z-index:2; position:relative; max-width:700px;}
+button{background-color:rgba(9,9,121,1);padding:7px 30px;color:rgba(2,0,36,1);border-radius:5px;font-size:22px;font-weight:900;transition:.3s ease;border:none;cursor:pointer;margin:10px;}
+button:hover{box-shadow:0 0 30px 13px rgba(2,0,36,1);}
+.correct{background-color:green;color:white;}
+.incorrect{background-color:red;color:white;}
+.animate-correct{animation: glowGreen 0.8s ease-in-out;}
+.animate-incorrect{animation: glowRed 0.8s ease-in-out;}
+@keyframes glowGreen{0%{box-shadow:0 0 0px green;transform:scale(1);}50%{box-shadow:0 0 15px green;transform:scale(1.1);}100%{box-shadow:0 0 0px green;transform:scale(1);}}
+@keyframes glowRed{0%{box-shadow:0 0 0px red;transform:scale(1);}50%{box-shadow:0 0 15px red;transform:scale(1.1);}100%{box-shadow:0 0 0px red;transform:scale(1);}}
+.success-animation{animation: confettiText 1.5s ease-in-out;}
+@keyframes confettiText{0%{transform:scale(0);opacity:0;}50%{transform:scale(1.2);opacity:1;}100%{transform:scale(1);opacity:1;}}
+.fail-animation{animation: shake 0.8s ease-in-out;}
+@keyframes shake{0%{transform:translateX(0);}25%{transform:translateX(-10px);}50%{transform:translateX(10px);}75%{transform:translateX(-10px);}100%{transform:translateX(0);}}
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="quiz"></div>
+    <button class="next">السؤال التالي</button>
+    <div id="timer"></div>
+
+    <!-- أصوات -->
+    <audio id="sound-correct" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+    <audio id="sound-wrong" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+</div>
+
+<script>
+// ------------------------- JavaScript ------------------------
+let next = document.querySelector(".next");
+let answer = document.createElement("div");
+let counter = 0;
+let score = 0;
+let correctStreak = 0;
+let timer;
+let timePerQuestion = 15;
+let timeLeft = timePerQuestion;
+
+const soundCorrect = document.getElementById("sound-correct");
+const soundWrong = document.getElementById("sound-wrong");
+
+const question = [
+    { qText:"في أي سنة انطلقت المسيرة الخضراء المغربية؟", aOption:[{answerText:"1975",isCorrecte:true},{answerText:"1965",isCorrecte:false},{answerText:"1980",isCorrecte:false},{answerText:"1970",isCorrecte:false}] },
+    { qText:"من كان ملك المغرب وقت المسيرة الخضراء؟", aOption:[{answerText:"الملك محمد الخامس",isCorrecte:false},{answerText:"الملك الحسن الثاني",isCorrecte:true},{answerText:"الملك محمد السادس",isCorrecte:false},{answerText:"الملك إدريس الثاني",isCorrecte:false}] },
+    { qText:"كم كانت المسافة التي اجتازها المشاركون؟", aOption:[{answerText:"350 كم",isCorrecte:true},{answerText:"400 كم",isCorrecte:false},{answerText:"300 كم",isCorrecte:false},{answerText:"500 كم",isCorrecte:false}] },
+    { qText:"ما الهدف الرئيسي من المسيرة الخضراء؟", aOption:[{answerText:"استرجاع الصحراء المغربية",isCorrecte:true},{answerText:"الاحتفال بالاستقلال",isCorrecte:false},{answerText:"إنشاء طرق جديدة",isCorrecte:false},{answerText:"تطوير الزراعة",isCorrecte:false}] },
+    { qText:"كم عدد المشاركين تقريبًا؟", aOption:[{answerText:"200 ألف",isCorrecte:false},{answerText:"350 ألف",isCorrecte:true},{answerText:"500 ألف",isCorrecte:false},{answerText:"100 ألف",isCorrecte:false}] },
+    { qText:"في أي شهر بدأت المسيرة؟", aOption:[{answerText:"نوفمبر",isCorrecte:true},{answerText:"أكتوبر",isCorrecte:false},{answerText:"ديسمبر",isCorrecte:false},{answerText:"سبتمبر",isCorrecte:false}] },
+    { qText:"كم يومًا استغرقت المسيرة؟", aOption:[{answerText:"6 أيام",isCorrecte:true},{answerText:"10 أيام",isCorrecte:false},{answerText:"3 أيام",isCorrecte:false},{answerText:"8 أيام",isCorrecte:false}] },
+    { qText:"أي المدن المغربية شاركت في التنظيم؟", aOption:[{answerText:"العيون",isCorrecte:true},{answerText:"فاس",isCorrecte:false},{answerText:"مراكش",isCorrecte:false},{answerText:"طنجة",isCorrecte:false}] },
+    { qText:"ما اللون الذي يرمز إليه في المسيرة؟", aOption:[{answerText:"الأخضر",isCorrecte:true},{answerText:"الأحمر",isCorrecte:false},{answerText:"الأبيض",isCorrecte:false},{answerText:"الأزرق",isCorrecte:false}] },
+    { qText:"أي رمزية يعكسها اللون الأخضر؟", aOption:[{answerText:"السلام والوطنية",isCorrecte:true},{answerText:"الحرب والانتصار",isCorrecte:false},{answerText:"الاحتفال",isCorrecte:false},{answerText:"الثروة",isCorrecte:false}] },
+    { qText:"ما اسم العملية العسكرية قبل المسيرة؟", aOption:[{answerText:"عملية التحرير",isCorrecte:false},{answerText:"عملية استرجاع",isCorrecte:false},{answerText:"المسيرة الخضراء",isCorrecte:true},{answerText:"عملية الصحراء",isCorrecte:false}] },
+    { qText:"من قاد المسيرة الخضراء؟", aOption:[{answerText:"الحسن الثاني",isCorrecte:true},{answerText:"محمد الخامس",isCorrecte:false},{answerText:"محمد السادس",isCorrecte:false},{answerText:"عبد الله",isCorrecte:false}] },
+    { qText:"هل كانت المسيرة سلمية؟", aOption:[{answerText:"نعم",isCorrecte:true},{answerText:"لا",isCorrecte:false},{answerText:"جزئيًا",isCorrecte:false},{answerText:"غير معروف",isCorrecte:false}] },
+    { qText:"هل شارك الجيش في المسيرة؟", aOption:[{answerText:"نعم",isCorrecte:false},{answerText:"لا",isCorrecte:true},{answerText:"جزئيًا",isCorrecte:false},{answerText:"غير معروف",isCorrecte:false}] },
+    { qText:"كم عدد النساء المشاركات؟", aOption:[{answerText:"ألف",isCorrecte:false},{answerText:"30 ألف",isCorrecte:true},{answerText:"50 ألف",isCorrecte:false},{answerText:"10 آلاف",isCorrecte:false}] },
+    { qText:"أين انتهت المسيرة؟", aOption:[{answerText:"العيون",isCorrecte:true},{answerText:"الداخلة",isCorrecte:false},{answerText:"الرباط",isCorrecte:false},{answerText:"مراكش",isCorrecte:false}] },
+    { qText:"ما شعار المسيرة الخضراء؟", aOption:[{answerText:"الوحدة والسلام",isCorrecte:true},{answerText:"الاستقلال",isCorrecte:false},{answerText:"القوة",isCorrecte:false},{answerText:"التضامن",isCorrecte:false}] },
+    { qText:"ماذا حمل المشاركون معهم؟", aOption:[{answerText:"القرآن",isCorrecte:true},{answerText:"الأعلام المغربية",isCorrecte:false},{answerText:"الأسلحة",isCorrecte:false},{answerText:"الطعام فقط",isCorrecte:false}] },
+    { qText:"كم عدد الأعلام التي وزعت؟", aOption:[{answerText:"350 ألف",isCorrecte:true},{answerText:"200 ألف",isCorrecte:false},{answerText:"500 ألف",isCorrecte:false},{answerText:"100 ألف",isCorrecte:false}] },
+    { qText:"هل المسيرة تعتبر رمز وطني؟", aOption:[{answerText:"نعم",isCorrecte:true},{answerText:"لا",isCorrecte:false},{answerText:"جزئيًا",isCorrecte:false},{answerText:"غير معروف",isCorrecte:false}] },
+];
+
+function dis(){
+    clearInterval(timer);
+    timeLeft = timePerQuestion;
+    startTimer();
+    answer.innerHTML = "";
+    const quiz = document.getElementById("quiz");
+    if(counter < question.length){
+        const q = question[counter];
+        const ele = document.createElement("div");
+        ele.innerHTML = `<h1 style="font-size:32px;">سؤال ${counter+1} من ${question.length}</h1>
+                         <h2 style="font-size:22px;margin-bottom:60px;margin-top:20px;">${q.qText}</h2>`;
+        q.aOption.forEach(opt=>{
+            const btn = document.createElement("button");
+            btn.innerHTML = opt.answerText;
+            if(opt.isCorrecte) btn.dataset.isCorrecte = true;
+            btn.addEventListener("click", checkAnswer);
+            answer.appendChild(btn);
+        });
+        quiz.innerHTML = "";
+        quiz.appendChild(ele);
+        quiz.appendChild(answer);
+    } else {
+        quiz.innerHTML = `<h1 style="font-size:32px;">النتيجة هي ${score}/${question.length}</h1>
+                          <h2 style="margin-bottom:40px;font-size:32px;">${score>=10 ? "نجحت 🎉":"فشلت ❌"}</h2>
+                          <a href="">إعادة الاختبار</a>`;
+        next.style.display="none";
+    }
+}
+
+// ------------------------- دالة تحقق الإجابة ------------------------
+function checkAnswer(e){
+    clearInterval(timer);
+    const selectBtn = e.target;
+    const correct = selectBtn.dataset.isCorrecte === "true";
+
+    if(correct){
+        swal("الجواب صحيح","","success");
+        selectBtn.classList.add("correct","animate-correct");
+        soundCorrect.play();
+        score++;
+        correctStreak++;
+
+        // Confetti متعدد الألوان ومتدرج حسب الإجابات الصحيحة المتتالية
+        const colors = ['#ff0a54', '#ff477e', '#ff7096', '#ff85a1', '#fbb1b9', '#f9bec7', '#f7cad0', '#fae0e4', '#b5ead7', '#9ae3d4'];
+        confetti({particleCount:100 + correctStreak*20, spread:70, origin:{y:0.5}, colors: colors});
+        document.body.classList.add("success-bg");
+        setTimeout(()=> document.body.classList.remove("success-bg"),1000);
+
+    } else{
+        swal("الجواب خاطئ","","error");
+        selectBtn.classList.add("incorrect","animate-incorrect");
+        soundWrong.play();
+        correctStreak = 0;
+    }
+
+    Array.from(answer.children).forEach(b=>{
+        if(b.dataset.isCorrecte==="true") b.classList.add("correct","animate-correct");
+        b.disabled = true;
+    });
+}
+
+// ------------------------- زر التالي ------------------------
+next.addEventListener("click", ()=>{
+    counter++;
+    dis();
+});
+
+// ------------------------- عداد الوقت ------------------------
+function startTimer(){
+    const timerDiv = document.getElementById("timer");
+    timerDiv.textContent = `الوقت المتبقي: ${timeLeft} ثانية`;
+    timer = setInterval(()=>{
+        timeLeft--;
+        timerDiv.textContent = `الوقت المتبقي: ${timeLeft} ثانية`;
+        if(timeLeft<=0){
+            clearInterval(timer);
+            swal("انتهى الوقت!","","warning");
+            correctStreak = 0;
+            Array.from(answer.children).forEach(b=>{
+                if(b.dataset.isCorrecte==="true") b.classList.add("correct","animate-correct");
+                b.disabled = true;
+            });
+        }
+    },1000);
+}
+
+// ------------------------- بدء الاختبار ------------------------
+dis();
+</script>
+</body>
+</html>
